@@ -4,14 +4,9 @@ use std::path::PathBuf;
 
 use anyhow::Error;
 use async_trait::async_trait;
-use rspotify::client::Spotify;
-use rspotify::model::cud_result::CUDResult;
-use rspotify::model::search::SearchResult;
-use rspotify::model::track::FullTrack;
-use rspotify::model::user::PrivateUser;
+use rspotify::model::{search::SearchResult, track::FullTrack};
 use rspotify::oauth2::{SpotifyClientCredentials, SpotifyOAuth, TokenInfo};
 use rspotify::senum::{Country, IncludeExternal, SearchType};
-use rspotify::util::get_token;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

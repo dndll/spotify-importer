@@ -1,36 +1,36 @@
 use anyhow::Error;
-use futures::{SinkExt, StreamExt};
+use raw::RawProvider;
 use rspotify::client::Spotify;
-use rspotify::model::cud_result::CUDResult;
 use rspotify::model::search::SearchResult;
 use rspotify::model::track::FullTrack;
 use rspotify::model::user::PrivateUser;
 use rspotify::oauth2::{SpotifyClientCredentials, SpotifyOAuth, TokenInfo};
-use rspotify::senum::{Country, IncludeExternal, SearchType};
+use rspotify::senum::{SearchType};
 use rspotify::util::get_token;
-
-use cli::Opts;
+use anyhow::anyhow;
 
 use crate::cli::get_opts_args;
 use crate::provider::StreamingProvider;
 use crate::tidal::TidalProvider;
+use std::str::FromStr;
 
 mod tidal;
 mod cli;
 mod provider;
-
-enum Platform {
+mod raw;
+#[derive(Debug)]
+pub enum Platform {
     TIDAL,
     NONE,
+    RAW,
 }
-
-impl Platform {
-    fn get_enum_from_string(value: String) -> Platform {
-        let value = value.to_lowercase();
-        let value = value.as_str();
-        match value {
-            "tidal" => Platform::TIDAL,
-            _ => Platform::NONE
+impl FromStr for Platform {
+    type Err = Error;
+    fn from_str(day: &str) -> Result<Self, Error> {
+        match day {
+            "tidal" => Ok(Platform::TIDAL),
+            "raw" => Ok(Platform::RAW),
+            _ => Err(anyhow!("Could not parse a platform")),
         }
     }
 }
@@ -48,14 +48,17 @@ async fn main() -> Result<(), Error> {
 
     match get_token(&mut oauth).await {
         Some(token_info) => {
-            let platform = Platform::get_enum_from_string(opts.platform.clone());
             let (spotify, user) = get_spotify(token_info).await;
-            let (provider, queries) = match platform {
+            let queries = match opts.platform {
                 Platform::TIDAL => {
                     let provider = TidalProvider::new(&opts);
-                    Ok((provider.clone(), provider.build_queries().await?))
+                    Ok(provider.build_queries().await?)
+                },
+                Platform::NONE => Err(anyhow::anyhow!("We do not support platform with options {:?}", opts.platform)),
+                Platform::RAW => {
+                    let provider = RawProvider::new(&opts);
+                    Ok(provider.build_queries().await?)
                 }
-                Platform::NONE => Err(anyhow::anyhow!("We do not support platform with options {}", opts.platform))
             }?;
 
             // search for tracks (artist, concat of artists and track title)
@@ -113,7 +116,7 @@ async fn main() -> Result<(), Error> {
             while let Some(track_ids) = futures.next() {
                 results.push(spotify.user_playlist_add_tracks(
                     user.id.as_str(),
-                    provider.playlist.as_str(),
+                    opts.playlist.as_str(),
                     &track_ids,
                     None,
                 ).await);

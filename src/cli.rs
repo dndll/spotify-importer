@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
+use crate::Platform;
 
 #[derive(Debug, StructOpt)]
 #[structopt(
@@ -15,7 +16,7 @@ pub struct Opts {
 
     /// The platform to import
     #[structopt(short = "x", long = "platform", default_value = "tidal")]
-    pub platform: String,
+    pub platform: Platform,
 
     /// The playlist to import to
     #[structopt(short = "p", long = "playlist")]
@@ -24,6 +25,8 @@ pub struct Opts {
     /// The location of the file to import
     #[structopt(long = "file", short = "f", parse(from_os_str))]
     pub file: PathBuf,
+
+    //TODO make some fields optional depending on platform
 }
 
 pub fn get_opts_args() -> Opts {
