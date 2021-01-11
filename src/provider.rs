@@ -1,5 +1,4 @@
-use rspotify::client::Spotify;
-use rspotify::model::user::PrivateUser;
+
 use anyhow::Error;
 use async_trait::async_trait;
 

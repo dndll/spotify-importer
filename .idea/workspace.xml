@@ -23,14 +23,20 @@
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" ENABLED="true" />
     </configurations>
   </component>
   <component name="CargoProjects">
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bb27fc3c-bcbb-4ee6-b960-17193771c396" name="Default Changelist" comment="" />
+    <list default="true" id="bb27fc3c-bcbb-4ee6-b960-17193771c396" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/example-raw.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/provider.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/provider.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/raw.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/raw.rs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -56,20 +62,22 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../worky" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
   </component>
   <component name="RunManager">
     <configuration name="Run tidal-spotify-importer" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="channel" value="DEFAULT" />
       <option name="command" value="run --package tidal-spotify-importer --bin tidal-spotify-importer" />
+      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
+      <option name="channel" value="DEFAULT" />
       <option name="allFeatures" value="false" />
       <option name="emulateTerminal" value="false" />
       <option name="backtrace" value="SHORT" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$" />
       <envs>
         <env name="RUST_LOG" value="debug" />
       </envs>
+      <option name="isRedirectInput" value="false" />
+      <option name="redirectInputPath" value="" />
       <method v="2">
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
@@ -96,67 +104,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="1313" y="318" width="804" height="710" key="#Plugins" timestamp="1605774902563">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="1313" y="318" width="804" height="710" key="#Plugins/0.0.3440.1440@0.0.3440.1440" timestamp="1605774902563" />
-    <state x="386" y="332" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1606745675410">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="386" y="332" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.3440.1440@0.0.3440.1440" timestamp="1606745675410" />
-    <state x="1365" y="479" width="700" height="388" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1605715564608">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="1365" y="479" width="700" height="388" key="#com.intellij.fileTypes.FileTypeChooser/0.0.3440.1440@0.0.3440.1440" timestamp="1605715564608" />
-    <state x="757" y="341" width="378" height="560" key="#com.intellij.ide.util.MemberChooser" timestamp="1606750377884">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="757" y="341" width="378" height="560" key="#com.intellij.ide.util.MemberChooser/0.0.3440.1440@0.0.3440.1440" timestamp="1606750377884" />
-    <state x="957" y="41" width="848" height="1319" key="DiffContextDialog" timestamp="1606751196386">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="957" y="41" width="848" height="1319" key="DiffContextDialog/0.0.3440.1440@0.0.3440.1440" timestamp="1606751196386" />
-    <state x="1135" y="380" key="FileChooserDialogImpl" timestamp="1607460100042">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="1135" y="380" key="FileChooserDialogImpl/0.0.3440.1440@0.0.3440.1440" timestamp="1607460100042" />
-    <state width="1200" height="287" key="GridCell.Tab.0.bottom" timestamp="1606751465340">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state width="1200" height="287" key="GridCell.Tab.0.bottom/0.0.3440.1440@0.0.3440.1440" timestamp="1606751465340" />
-    <state width="1200" height="287" key="GridCell.Tab.0.center" timestamp="1606751465338">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state width="1200" height="287" key="GridCell.Tab.0.center/0.0.3440.1440@0.0.3440.1440" timestamp="1606751465338" />
-    <state width="1200" height="287" key="GridCell.Tab.0.left" timestamp="1606751465337">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state width="1200" height="287" key="GridCell.Tab.0.left/0.0.3440.1440@0.0.3440.1440" timestamp="1606751465337" />
-    <state width="1200" height="287" key="GridCell.Tab.0.right" timestamp="1606751465339">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state width="1200" height="287" key="GridCell.Tab.0.right/0.0.3440.1440@0.0.3440.1440" timestamp="1606751465339" />
-    <state width="498" height="446" key="SwitcherDM" timestamp="1606749666621">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state width="498" height="446" key="SwitcherDM/0.0.3440.1440@0.0.3440.1440" timestamp="1606749666620" />
-    <state x="1152" y="41" width="1135" height="1319" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1606735573532">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="1152" y="41" width="1135" height="1319" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.3440.1440@0.0.3440.1440" timestamp="1606735573532" />
-    <state x="472" y="288" width="774" height="771" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1605717181506">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="472" y="288" width="774" height="771" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.3440.1440@0.0.3440.1440" timestamp="1605717181506" />
-    <state x="765" y="591" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1606730794389">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="765" y="591" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.3440.1440@0.0.3440.1440" timestamp="1606730794389" />
-    <state x="862" y="449" width="635" height="502" key="find.popup" timestamp="1606732485283">
-      <screen x="0" y="0" width="3440" height="1440" />
-    </state>
-    <state x="862" y="449" width="635" height="502" key="find.popup/0.0.3440.1440@0.0.3440.1440" timestamp="1606732485283" />
   </component>
 </project>

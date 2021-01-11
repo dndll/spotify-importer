@@ -49,7 +49,7 @@ impl StreamingProvider<Raw> for RawProvider {
         println!("> Reading csv file..");
         let raw = get_raws_from_file(&self.file)?;
         // read a source
-        println!("> Importing {} tracks..", raw.queries.len() - 1);
+        println!("> Importing {} tracks..", raw.queries.len());
         Ok(raw)
     }
 

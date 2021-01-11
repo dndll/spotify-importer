@@ -72,7 +72,7 @@ async fn main() -> Result<(), Error> {
                 let future = spotify.search(
                     query_cloned.as_str(),
                     SearchType::Track,
-                    50,
+                    10,
                     0,
                     None,
                     None,
