@@ -1,6 +1,7 @@
 use std::fs::File;
-use std::path::PathBuf;
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use anyhow::{Context, Error};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -202,9 +203,14 @@ impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
     //TODO should be response dto from reading a csv of raws
     async fn gather_data(&self) -> Result<PlaylistVideoListRenderer, anyhow::Error> {
         println!("> Retrieving youtube data from url..");
+        let html = retrieve_youtube_data(&self.playlist).await?;
         println!("> Extracting store dump..");
+        let json = extract_initial_yt_data(html)?;
         println!("> Deserialising initial data..");
-        let data = get_raws_from_file()?; //TODO start retrieving the data
+        println!("Json{}", json);
+        let value: Value = serde_json::from_str(&json)?;
+        let data = sanitize_raw_data(value)?;
+        // let data = get_raws_from_file()?; //TODO start retrieving the data
         let total_videos = data.contents.len();
         println!("> Importing {} tracks..", total_videos);
         Ok(data)
@@ -233,21 +239,21 @@ impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
 fn determine_artist_from_title(title: &String) -> Result<(String, String), Error> {
     let array: Vec<&str> = title.split("-").collect();
     let mut artist = array.first().context("Failed to get artist")?.to_lowercase();
-    if artist.ends_with(" ") {
+    if artist.ends_with(' ') {
         artist.pop();
     }
 
     let song = array.get(1).context("Failed to get artist")?;
-    let song_replaced = if song.contains("[") {
+    let song_replaced = if song.contains('[') {
         let mut song_replaced = song
             .split("[")
             .collect::<Vec<&str>>()
             .first()
             .context("Failed to get song")?.to_lowercase();
-        if song_replaced.ends_with(" ") {
+        if song_replaced.ends_with(' ') {
             song_replaced = song_replaced.trim_end().to_lowercase()
         }
-        if song_replaced.starts_with(" ") {
+        if song_replaced.starts_with(' ') {
             song_replaced = song_replaced.trim_start().to_lowercase()
         }
         song_replaced
@@ -256,14 +262,51 @@ fn determine_artist_from_title(title: &String) -> Result<(String, String), Error
     };
     Ok((artist, song_replaced))
 }
+fn extract_initial_yt_data(html: String) -> Result<String, Error> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("var ytInitialData = (.*);").unwrap();
+    }
+    let mut result: String = RE.find_iter(&html)
+        .map(|mat| mat.as_str())
+        .collect::<String>()
+        .replace("var ytinitialdata = ", "");
+    let range = result.find(';').unwrap_or(result.len());
+    result.replace_range(range.., "");
+    Ok(result.replace("var ytInitialData = ", ""))
+}
+
+fn some_helper_function(text: &str) -> bool {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("/var ytInitialData = (.*);").unwrap();
+    }
+    RE.is_match(text)
+}
+
+async fn retrieve_youtube_data(playlist: &String) -> Result<String, Error> {
+    let response = reqwest::get(&build_playlist_url(&playlist))
+    .await?
+    .text()
+    .await?;
+
+
+    Ok(response)
+}
+
+fn build_playlist_url(playlist: &String) -> String {
+    format!("https://www.youtube.com/playlist?list={}", playlist) // TODO format isnt optimal should probably just append
+}
 
 pub fn get_raws_from_file() -> Result<PlaylistVideoListRenderer, Error> {
     let rdr = File::open("./ytInitialData.json")?;
     let res: Value = serde_json::from_reader(rdr)?;
-    let data: PlaylistVideoListRenderer = res.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer")?.expect("Failed to read for renderer");
-    let continuation: Content4 = res.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
+    let data = sanitize_raw_data(res)?;
+    // let res = (vec.dot_get::<Value>("0.0.1.4")
+    Ok(data)
+}
+fn sanitize_raw_data(value: Value) -> Result<PlaylistVideoListRenderer, Error>{
+    let data: PlaylistVideoListRenderer = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer")?.expect("Failed to read for renderer");
+    let continuation: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
     let token = continuation.continuation_item_renderer;
     println!("Token is {:?}", token);
-    // let res = (vec.dot_get::<Value>("0.0.1.4")
     Ok(data)
 }
