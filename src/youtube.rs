@@ -203,23 +203,61 @@ impl YoutubeProvider {
 impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
     //TODO should be response dto from reading a csv of raws
     async fn gather_data(&self) -> Result<PlaylistVideoListRenderer, anyhow::Error> {
-        println!("> Retrieving youtube data from url..");
-        let html = retrieve_youtube_data(&self.playlist).await?;
-        println!("> Extracting store dump..");
-        let json = extract_initial_yt_data(html)?;
-        println!("> Deserialising initial data..");
-        let value: Value = serde_json::from_str(&json)?;
-        let token: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
-        let token = token.continuation_item_renderer.unwrap().continuation_endpoint.continuation_command.token;
-        let page = retrieve_next_page(token).await?;
-        // let page = extract_initial_yt_data(page)?;
-        println!("next page {}", page);
 
-        let data = sanitize_raw_data(value)?;
-        // let data = get_raws_from_file()?; //TODO start retrieving the data
-        let total_videos = data.contents.len();
+        let mut data_list = vec![];
+        let mut token_counter = String::from("1");
+        let mut started = false;
+        while !token_counter.is_empty() {
+            println!("started {} token counter {}", started, token_counter);
+            let json = if !started {
+
+                println!("> Retrieving initial youtube data..");
+                let html = retrieve_youtube_data(&self.playlist).await?;
+                println!("> Extracting store dump..");
+                extract_initial_yt_data(html)?
+            } else {
+                println!("> Retrieving next page..");
+                retrieve_next_page(token_counter).await?
+            };
+
+
+
+            println!("> Deserialising data..");
+            let value: Value = serde_json::from_str(json.trim_end())?;
+
+            if !started {
+                let token: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
+                let token = token.continuation_item_renderer.unwrap().continuation_endpoint.continuation_command.token;
+                token_counter = token;
+            } else {
+                let token: Content4 = value.dot_get("onResponseReceivedActions.0.appendContinuationItemsAction.continuationItems.>")?.expect("Failed to read command contents");
+                let renderer = token.continuation_item_renderer;
+                match renderer {
+                    None => {
+                        token_counter = String::new()
+                    }
+                    Some(renderer) => {
+                        let token = renderer.continuation_endpoint.continuation_command.token;
+                        token_counter = token;
+                    }
+                }
+            }
+
+
+            let mut data = if !started {
+                extract_initial_data(value)?
+            } else {
+                extract_data(value)?
+            };
+            data_list.append(&mut data.contents);
+
+            started = true;
+
+        }
+
+        let total_videos = data_list.len();
         println!("> Importing {} tracks..", total_videos);
-        Ok(data)
+        Ok(PlaylistVideoListRenderer { contents: data_list })
     }
 
     fn convert_to_query(&self, item: PlaylistVideoListRenderer) -> Vec<(String, String)> {
@@ -242,14 +280,18 @@ impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
     }
 }
 
-fn determine_artist_from_title(title: &String) -> Result<(String, String), Error> {
-    let array: Vec<&str> = title.split("-").collect();
-    let mut artist = array.first().context("Failed to get artist")?.to_lowercase();
+fn determine_artist_from_title(title: &str) -> Result<(String, String), Error> {
+    println!("determining artist for title: {}", title);
+    let (mut artist, song) = if title.contains('-') {
+        let array: Vec<&str> = title.split('-').collect();
+        (array.first().context("Failed to get artist")?.to_lowercase(), array.get(1).context("Failed to get artist")?.to_string())
+    } else {
+        (String::new(), title.to_string())
+    };
     if artist.ends_with(' ') {
         artist.pop();
     }
 
-    let song = array.get(1).context("Failed to get artist")?;
     let song_replaced = if song.contains('[') {
         let mut song_replaced = song
             .split("[")
@@ -487,14 +529,16 @@ fn build_playlist_url(playlist: &String) -> String {
 pub fn get_raws_from_file() -> Result<PlaylistVideoListRenderer, Error> {
     let rdr = File::open("./ytInitialData.json")?;
     let res: Value = serde_json::from_reader(rdr)?;
-    let data = sanitize_raw_data(res)?;
+    let data = extract_initial_data(res)?;
     Ok(data)
 }
 
-fn sanitize_raw_data(value: Value) -> Result<PlaylistVideoListRenderer, Error> {
+fn extract_initial_data(value: Value) -> Result<PlaylistVideoListRenderer, Error> {
     let data: PlaylistVideoListRenderer = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer")?.expect("Failed to read for renderer");
-    let continuation: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
-    let token = continuation.continuation_item_renderer;
-    println!("Token is {:?}", token);
     Ok(data)
+}
+fn extract_data(value: Value) -> Result<PlaylistVideoListRenderer, Error> {
+    let data: Vec<Content4> = value.dot_get("onResponseReceivedActions.0.appendContinuationItemsAction.continuationItems")?.expect("Failed to read command contents");
+    let contents = data.iter().filter(|content| content.playlist_video_renderer.is_some()).cloned().collect();
+    Ok(PlaylistVideoListRenderer { contents })
 }
