@@ -1,4 +1,21 @@
-{"continuationCommand": {
-"token": "4qmFsgJLEhpWTFVVVFozNUdRZlNiMFJzUGRSRWhXWnJ0ZxoSQ0FSNkIxQlVPa05LUVVRJTNEmgIYVVVUWjM1R1FmU2IwUnNQZFJFaFdacnRn",
-"request": "CONTINUATION_REQUEST_TYPE_BROWSE"
-}}
+{
+  "continuationItemRenderer": {
+    "trigger": "CONTINUATION_TRIGGER_ON_ITEM_SHOWN",
+    "continuationEndpoint": {
+      "clickTrackingParams": "CDUQ7zsYACITCMil-KPpk-4CFYWjUQodsdYFVg==",
+      "commandMetadata": {
+        "webCommandMetadata": {
+          "sendPost": true,
+          "apiUrl": "/youtubei/v1/browse"
+        }
+      },
+      "continuationCommand": {
+        "token": "4qmFsgJNEhpWTFVVVFozNUdRZlNiMFJzUGRSRWhXWnJ0ZxoUQ0FGNkJsQlVPa05IVVElM0QlM0SaAhhVVVRaMzVHUWZTYjBSc1BkUkVoV1pydGc%3D",
+        "request": "CONTINUATION_REQUEST_TYPE_BROWSE"
+      }
+    }
+  }
+}
+
+"query param key = INNERTUBE_API_KEY"
+"can get all user details from "user":{"
