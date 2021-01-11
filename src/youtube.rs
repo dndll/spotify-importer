@@ -1,15 +1,17 @@
 use std::fs::File;
 
-use lazy_static::lazy_static;
-use regex::Regex;
 use anyhow::{Context, Error};
 use async_trait::async_trait;
+use json_dotpath::DotPaths;
+use lazy_static::lazy_static;
+use regex::Regex;
+use reqwest::Client;
+use reqwest::header::{HeaderMap, USER_AGENT};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 use crate::cli::Opts;
 use crate::provider::StreamingProvider;
-use serde_json::Value;
-use json_dotpath::DotPaths;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -182,7 +184,6 @@ pub struct ContinuationCommand {
 }
 
 
-
 #[derive(Default, Debug, Clone)]
 pub struct YoutubeProvider {
     pub playlist: String
@@ -207,8 +208,13 @@ impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
         println!("> Extracting store dump..");
         let json = extract_initial_yt_data(html)?;
         println!("> Deserialising initial data..");
-        println!("Json{}", json);
         let value: Value = serde_json::from_str(&json)?;
+        let token: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
+        let token = token.continuation_item_renderer.unwrap().continuation_endpoint.continuation_command.token;
+        let page = retrieve_next_page(token).await?;
+        // let page = extract_initial_yt_data(page)?;
+        println!("next page {}", page);
+
         let data = sanitize_raw_data(value)?;
         // let data = get_raws_from_file()?; //TODO start retrieving the data
         let total_videos = data.contents.len();
@@ -262,6 +268,7 @@ fn determine_artist_from_title(title: &String) -> Result<(String, String), Error
     };
     Ok((artist, song_replaced))
 }
+
 fn extract_initial_yt_data(html: String) -> Result<String, Error> {
     lazy_static! {
         static ref RE: Regex = Regex::new("var ytInitialData = (.*);").unwrap();
@@ -284,12 +291,193 @@ fn some_helper_function(text: &str) -> bool {
 
 async fn retrieve_youtube_data(playlist: &String) -> Result<String, Error> {
     let response = reqwest::get(&build_playlist_url(&playlist))
-    .await?
-    .text()
-    .await?;
-
+        .await?
+        .text()
+        .await?;
 
     Ok(response)
+}
+
+async fn retrieve_next_page(token: String) -> Result<String, Error> {
+    // lazy_static! {
+    //     static ref CLIENT: Client = reqwest::Client::new();
+    // }
+    let client = reqwest::Client::builder();
+    let mut header_map = HeaderMap::new();
+    header_map.insert(USER_AGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:85.0) Gecko/20100101 Firefox/85.0".parse().unwrap());
+    header_map.insert("X-Goog-Visitor-Id", "CgtEbWNCbGdTZXVmOCjh-PD_BQ%3D%3D".parse().unwrap());
+    header_map.insert("X-Youtube-Client-Name", "1".parse().unwrap());
+    header_map.insert("X-Youtube-Client-Version", "2.20210107.08.00".parse().unwrap());
+    header_map.insert("Authorization", "SAPISIDHASH 1610366180_d5ae2bad7a2c4b0636d3ac393689e8ac951c98ad".parse().unwrap());
+    header_map.insert("X-Goog-AuthUser", "0".parse().unwrap());
+    header_map.insert("X-Origin", "https://www.youtube.com".parse().unwrap());
+    header_map.insert("Origin", "https://www.youtube.com".parse().unwrap());
+    header_map.insert("Cookie", "VISITOR_INFO1_LIVE=DmcBlgSeuf8; PREF=al=en-GB; CONSENT=YES+GB.en-GB+V9; __Secure-3PSID=5gdlMYNkjtKXm7vkbvrMVVwpvPZ2Jd4axg319K1khe-HUl39-tNPBt59MEWIO7-cdVVNeQ.; __Secure-3PAPISID=KDyp_Pvxmizot43f/A9ACfC9X5qr9oEvoe; __Secure-3PSIDCC=AJi4QfESnWYtKI6KxaudytOC7qeUChk6REaOMlxCEoJH_RLjgkJf-tGYDhsYnJrKmhMnaAnlP3s; SID=5gdlMYNkjtKXm7vkbvrMVVwpvPZ2Jd4axg319K1khe-HUl39QyJyQYAtI7_52p0yJgypJQ.; HSID=AwBtT9160yU0wYL89; SSID=AygN54p0g04YMbeE5; APISID=Py38xqaJCSgTAOY0/Al8eBKTBByIt_h8lf; SAPISID=KDyp_Pvxmizot43f/A9ACfC9X5qr9oEvoe; SIDCC=AJi4QfHRyCzmsTmacJAko-gVWpEeuNLnufE8nKaWWcVON21Fz6OP05rzd5Aq1Y-fc4OhSyqtNVk; YSC=f9EGCfPk2i4; LOGIN_INFO=AFmmF2swRgIhAPIxipPOt5Zs9hO6I5roY2K7eqTeN-uLQW2fsuqIlIV4AiEA4iRD7lTD7Wr_WlVoQtIoMhNtWQlwMxuAnKxse84lDJg:QUQ3MjNmd21VRWRsOVcwX1JVRXhHUDdmY2ZINUJpZTN4dk9ld3FTT2JpWXhuVTY2S0gwMEJBOGZqdEVaQUx5LVlrZGd0R3JCWHZNVHYyYV9VWF9PMjM2Tm5La2VOZDBKSUhJYkFhNE11YklkQUF2amtZVXVqR2oyOHNyblFoV3dvR3J5bjJUbGpMLUJhX2E0NDZHMEhDUWJXRU0xUWtMdHh3TG1iWGhiZVlwV2NIenJhZ3hCS21pLWZWOVJ1STJ0V2dkUFdZcVhyTHc3".parse().unwrap());
+    header_map.insert("TE", "Trailers".parse().unwrap());
+    // header_map.insert("", "".parse().unwrap());
+    let client = client.default_headers(header_map).build()?;
+
+
+    let res = client.post("https://www.youtube.com/youtubei/v1/browse")
+        .query(&[("key", "AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8")])
+        .body(build_next_request(token))
+        .send()
+        .await?
+        .text()
+        .await?;
+    Ok(res)
+}
+
+fn build_next_request(token: String) -> String {
+    let value = serde_json::json!({
+    "context": {
+        "client": {
+            "hl": "en-GB",
+            "gl": "GB",
+            "geo": "GB",
+            "remoteHost": "77.102.111.53",
+            "isInternal": true,
+            "deviceMake": "",
+            "deviceModel": "",
+            "visitorData": "CgtEbWNCbGdTZXVmOCjh-PD_BQ%3D%3D",
+            "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:85.0) Gecko/20100101 Firefox/85.0,gzip(gfe)",
+            "clientName": "WEB",
+            "clientVersion": "2.20210107.08.00",
+            "osName": "X11",
+            "osVersion": "",
+            "originalUrl": "https://www.youtube.com/playlist?list=UUTZ35GQfSb0RsPdREhWZrtg",
+            "internalClientExperimentIds": [
+                44496012
+            ],
+            "platform": "DESKTOP",
+            "gfeFrontlineInfo": "vip=216.58.204.238,server_port=443,client_port=42268,tcp_connection_request_count=0,header_order=HUALEC,gfe_version=2.699.14,ssl,ssl_info=TLSv1.3:RA:F,tlsext=S,sni=www.youtube.com,hex_encoded_client_hello=130113031302c02bc02fcca9cca8c02cc030c00ac009c013c014009c009d002f0035000a-00-00000017ff01000a000b001000050033002b000d002d001c0029,c=1301,pn=alpn,ja3=df208241e7f3897d4ca38cfe68eabb21,rtt_source=h2_ping,rtt=18,srtt=30,client_protocol=h2,client_transport=tcp,gfe=aclhrpp16.prod.google.com,pzf=Linux 2.2.x-3.x [4:56+8:0:1460:mss*44/7:mss/sok/ts/nop/ws:df/id+:0] [generic tos:0x20],vip_region=default,asn=5089,cc=GB,eid=YDz8X8H0PJDx8Aech56ADw,scheme=https",
+            "clientFormFactor": "UNKNOWN_FORM_FACTOR",
+            "countryLocationInfo": {
+                "countryCode": "GB",
+                "countrySource": "COUNTRY_SOURCE_IPGEO_INDEX"
+            },
+            "browserName": "Firefox",
+            "browserVersion": "85.0",
+            "screenWidthPoints": 5733,
+            "screenHeightPoints": 1433,
+            "screenPixelDensity": 1,
+            "screenDensityFloat": 0.6,
+            "utcOffsetMinutes": 0,
+            "userInterfaceTheme": "USER_INTERFACE_THEME_LIGHT",
+            "mainAppWebInfo": {
+                "graftUrl": "https://www.youtube.com/playlist?list=UUTZ35GQfSb0RsPdREhWZrtg"
+            },
+            "timeZone": "Europe/London"
+        },
+        "user": {
+            "gaiaId": "1097453154661",
+            "userId": "14077168010",
+            "lockedSafetyMode": false
+        },
+        "request": {
+            "useSsl": true,
+            "sessionId": "6916434730968166000",
+            "parentEventId": {
+                "timeUsec": "1610366049003706",
+                "serverIp": "99695580",
+                "processId": "1175011765"
+            },
+            "internalExperimentFlags": [],
+            "consistencyTokenJars": []
+        },
+        "clickTracking": {
+            "clickTrackingParams": "CDUQ7zsYACITCMnexoLpk-4CFZKx1QodIKIG0w=="
+        },
+        "clientScreenNonce": "MC41MjAzNjcwOTQxODAwMTU.",
+        "adSignalsInfo": {
+            "params": [
+                {
+                    "key": "dt",
+                    "value": "1610366049764"
+                },
+                {
+                    "key": "flash",
+                    "value": "0"
+                },
+                {
+                    "key": "frm",
+                    "value": "0"
+                },
+                {
+                    "key": "u_tz",
+                    "value": "0"
+                },
+                {
+                    "key": "u_his",
+                    "value": "9"
+                },
+                {
+                    "key": "u_java",
+                    "value": "false"
+                },
+                {
+                    "key": "u_h",
+                    "value": "2400"
+                },
+                {
+                    "key": "u_w",
+                    "value": "5733"
+                },
+                {
+                    "key": "u_ah",
+                    "value": "2400"
+                },
+                {
+                    "key": "u_aw",
+                    "value": "5733"
+                },
+                {
+                    "key": "u_cd",
+                    "value": "24"
+                },
+                {
+                    "key": "u_nplug",
+                    "value": "0"
+                },
+                {
+                    "key": "u_nmime",
+                    "value": "0"
+                },
+                {
+                    "key": "bc",
+                    "value": "31"
+                },
+                {
+                    "key": "bih",
+                    "value": "1433"
+                },
+                {
+                    "key": "biw",
+                    "value": "5713"
+                },
+                {
+                    "key": "brdim",
+                    "value": "0,0,0,0,5733,0,5733,2400,5733,1433"
+                },
+                {
+                    "key": "vis",
+                    "value": "1"
+                },
+                {
+                    "key": "wgl",
+                    "value": "true"
+                },
+                {
+                    "key": "ca_type",
+                    "value": "image"
+                }
+            ],
+            "bid": "ANyPxKp8h8KEEwCqi13W3uXn5bOqCXQ8VwYxMiyOfcV9FkjWVtFh_wjeS2-KgzuPsUjJMo_lMZ02nrzgWTEJQowgNfpRJ5BSww"
+        }
+    },
+    "continuation": token
+});
+    value.to_string()
 }
 
 fn build_playlist_url(playlist: &String) -> String {
@@ -300,10 +488,10 @@ pub fn get_raws_from_file() -> Result<PlaylistVideoListRenderer, Error> {
     let rdr = File::open("./ytInitialData.json")?;
     let res: Value = serde_json::from_reader(rdr)?;
     let data = sanitize_raw_data(res)?;
-    // let res = (vec.dot_get::<Value>("0.0.1.4")
     Ok(data)
 }
-fn sanitize_raw_data(value: Value) -> Result<PlaylistVideoListRenderer, Error>{
+
+fn sanitize_raw_data(value: Value) -> Result<PlaylistVideoListRenderer, Error> {
     let data: PlaylistVideoListRenderer = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer")?.expect("Failed to read for renderer");
     let continuation: Content4 = value.dot_get("contents.twoColumnBrowseResultsRenderer.tabs.0.tabRenderer.content.sectionListRenderer.contents.0.itemSectionRenderer.contents.0.playlistVideoListRenderer.contents.>")?.expect("Failed to read command contents");
     let token = continuation.continuation_item_renderer;
