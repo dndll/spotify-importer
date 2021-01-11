@@ -205,7 +205,6 @@ impl StreamingProvider<PlaylistVideoListRenderer> for YoutubeProvider {
         println!("> Extracting store dump..");
         println!("> Deserialising initial data..");
         let data = get_raws_from_file()?; //TODO start retrieving the data
-        // let key = serde_json
         let total_videos = data.contents.len();
         println!("> Importing {} tracks..", total_videos);
         Ok(data)
