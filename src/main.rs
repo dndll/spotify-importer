@@ -13,16 +13,20 @@ use crate::cli::get_opts_args;
 use crate::provider::StreamingProvider;
 use crate::tidal::TidalProvider;
 use std::str::FromStr;
+use crate::youtube::YoutubeProvider;
 
 mod tidal;
 mod cli;
 mod provider;
 mod raw;
+mod youtube;
+
 #[derive(Debug)]
 pub enum Platform {
     TIDAL,
     NONE,
     RAW,
+    YOUTUBE,
 }
 impl FromStr for Platform {
     type Err = Error;
@@ -30,6 +34,7 @@ impl FromStr for Platform {
         match day {
             "tidal" => Ok(Platform::TIDAL),
             "raw" => Ok(Platform::RAW),
+            "yt" | "youtube" => Ok(Platform::YOUTUBE),
             _ => Err(anyhow!("Could not parse a platform")),
         }
     }
@@ -58,11 +63,16 @@ async fn main() -> Result<(), Error> {
                 Platform::RAW => {
                     let provider = RawProvider::new(&opts);
                     Ok(provider.build_queries().await?)
+                },
+                Platform::YOUTUBE => {
+                    let provider = YoutubeProvider::new(&opts);
+                    Ok(provider.build_queries().await?)
                 }
             }?;
 
             // search for tracks (artist, concat of artists and track title)
             println!("> Searching tracks..");
+            println!("> Queries {:?}", queries);
             let mut search_results: Vec<(String, String, Result<SearchResult, _>)> = vec![];
 
 

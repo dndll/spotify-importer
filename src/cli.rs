@@ -26,6 +26,11 @@ pub struct Opts {
     #[structopt(long = "file", short = "f", parse(from_os_str))]
     pub file: PathBuf,
 
+
+    /// The playlist to import to
+    #[structopt(short = "y", long = "youtube_playlist")]
+    pub youtube_playlist: String,
+
     //TODO make some fields optional depending on platform
 }
 
