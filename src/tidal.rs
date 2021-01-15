@@ -112,7 +112,7 @@ impl TidalProvider {
     pub fn new(opts: &Opts) -> TidalProvider {
         TidalProvider {
             playlist: opts.playlist.to_owned(),
-            file: opts.file.to_owned(),
+            file: opts.tidal_file.as_ref().expect("Failed to unwrap the tidal_file parameter").to_path_buf(),
         }
     }
 }

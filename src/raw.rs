@@ -35,7 +35,7 @@ impl RawProvider {
     pub fn new(opts: &Opts) -> RawProvider {
         RawProvider {
             playlist: opts.playlist.to_owned(),
-            file: opts.file.to_owned(),
+            file: opts.raw_file.as_ref().expect("Failed to unwrap the raw_file parameter").to_path_buf(),
         }
     }
 }

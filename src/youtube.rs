@@ -193,7 +193,7 @@ pub struct YoutubeProvider {
 impl YoutubeProvider {
     pub fn new(opts: &Opts) -> YoutubeProvider {
         YoutubeProvider {
-            playlist: opts.youtube_playlist.to_owned()
+            playlist: opts.youtube_playlist.as_ref().expect("Failed to unwrap the youtube_playlist parameter").to_string()
         }
     }
 }

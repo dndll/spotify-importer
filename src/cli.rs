@@ -23,15 +23,18 @@ pub struct Opts {
     pub playlist: String,
 
     /// The location of the file to import
-    #[structopt(long = "file", short = "f", parse(from_os_str))]
-    pub file: PathBuf,
+    #[structopt(long = "tidal_file", short = "t", parse(from_os_str), required_if("platform", "tidal"))]
+    pub tidal_file: Option<PathBuf>,
+
+    /// The location of the file to import
+    #[structopt(long = "raw_file", short = "r", parse(from_os_str), required_if("platform", "raw"))]
+    pub raw_file: Option<PathBuf>,
 
 
     /// The playlist to import to
-    #[structopt(short = "y", long = "youtube_playlist")]
-    pub youtube_playlist: String,
+    #[structopt(short = "y", long = "youtube_playlist", required_if("platform", "youtube"))]
+    pub youtube_playlist: Option<String>,
 
-    //TODO make some fields optional depending on platform
 }
 
 pub fn get_opts_args() -> Opts {
