@@ -31,13 +31,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bb27fc3c-bcbb-4ee6-b960-17193771c396" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/cli.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/cli.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/raw.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/raw.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tidal.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tidal.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/youtube.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/youtube.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.json" beforeDir="false" afterPath="$PROJECT_DIR$/test.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
